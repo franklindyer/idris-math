@@ -1,21 +1,35 @@
 module Magma
 
+public export
 record Magma where
     set : Type
     bop : set -> set -> set
 
+public export
 hasLeftId : Magma -> Type
 hasLeftId mag = DPair mag.set (\e => (x : mag.set) -> mag.bop e x = x)
 
+public export
 hasRightId : Magma -> Type
 hasRightId mag = DPair mag.set (\e => (x : mag.set) -> mag.bop x e = x)
 
+public export
 isCommutative : Magma -> Type
 isCommutative mag = (x, y : mag.set) -> mag.bop x y = mag.bop y x
 
+public export
 isAssociative : Magma -> Type
 isAssociative mag = (x, y, z : mag.set) -> mag.bop (mag.bop x y) z = mag.bop x (mag.bop y z)
 
+public export
+isLeftCancellative : Magma -> Type
+isLeftCancellative mag = (x, y, z : mag.set) -> mag.bop x y = mag.bop x z -> y = z
+
+public export
+isRightCancellative : Magma -> Type
+isRightCancellative mag = (x, y, z : mag.set) -> mag.bop x z = mag.bop y z -> x = y
+
+public export
 twoSidedId : (m : Magma) ->
              (idL : hasLeftId m) -> 
              (idR : hasRightId m) ->
