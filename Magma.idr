@@ -1,47 +1,51 @@
 module Magma
 
-import Logic
+record Magma where
+    set : Type
+    bop : set -> set -> set
 
-interface Magma a where
-    mop : a -> a -> a
+hasLeftId : Magma -> Type
+hasLeftId mag = DPair mag.set (\e => (x : mag.set) -> mag.bop e x = x)
 
-hasLeftId : Type -> Type
-hasLeftId a = Magma a => DPair a (\e => (x : a) -> mop e x = x)
+hasRightId : Magma -> Type
+hasRightId mag = DPair mag.set (\e => (x : mag.set) -> mag.bop x e = x)
 
-hasRightId : Type -> Type
-hasRightId a = Magma a => DPair a (\e => (x : a) -> mop x e = x)
+isCommutative : Magma -> Type
+isCommutative mag = (x, y : mag.set) -> mag.bop x y = mag.bop y x
 
-isCommutative : Type -> Type
-isCommutative a = Magma a => (x, y : a) -> mop x y = mop y x
+isAssociative : Magma -> Type
+isAssociative mag = (x, y, z : mag.set) -> mag.bop (mag.bop x y) z = mag.bop x (mag.bop y z)
 
-isAssociative : Type -> Type
-isAssociative a = Magma a => (x, y, z : a) -> mop (mop x y) z = mop x (mop y z)
-
-assocFour : Magma a => 
-            isAssociative a ->
-            (w, x, y, z : a) -> mop (mop (mop w x) y) z = mop w (mop x (mop y z))
-assocFour assoc w x y z
+assocFour : (m : Magma) -> 
+            isAssociative m ->
+            (w, x, y, z : m.set) -> 
+            m.bop (m.bop (m.bop w x) y) z = m.bop w (m.bop x (m.bop y z))
+assocFour mag assoc w x y z
     = trans 
-        (cong (\v => mop v z) (assoc w x y)) $ trans
-        (assoc w (mop x y) z)
-        (cong (mop w) (assoc x y z)) 
+        (cong (\v => mag.bop v z) (assoc w x y)) $ trans
+        (assoc w (mag.bop x y) z)
+        (cong (mag.bop w) (assoc x y z)) 
 
-twoSidedId : Magma a =>
-             (idL : hasLeftId a) -> 
-             (idR : hasRightId a) ->
-             .fst idL = .fst idR
-twoSidedId idL idR
+twoSidedId : (m : Magma) ->
+             (idL : hasLeftId m) -> 
+             (idR : hasRightId m) ->
+             idL.fst = idR.fst
+twoSidedId mag idL idR
     = trans
-        (sym (.snd idR $ .fst idL))
-        (.snd idL $ .fst idR)
+        (sym (idR.snd $ idL.fst))
+        (idL.snd $ idR.fst)
 
 -- Still buggy
-putnam32B1 : Magma a =>
-             ((x : a) -> mop x x = x) ->
-             ((x, y, z : a) -> mop (mop x y) z = mop (mop y z) x) ->
-             Pair (isCommutative a) (isAssociative a)            
-putnam32B1 idemp cycle
+putnam32B1 : (m : Magma) ->
+             ((x : m.set) -> m.bop x x = x) ->
+             ((x, y, z : m.set) -> m.bop (m.bop x y) z = m.bop (m.bop y z) x) ->
+             Pair (isCommutative m) (isAssociative m)
+putnam32B1 mag idemp cycle
     = let
+        a : Type
+        a = mag.set;
+        mop : a -> a -> a
+        mop = mag.bop;
         comm : (x, y : a) -> mop x y = mop y x
         comm y x =
             trans
@@ -59,6 +63,7 @@ putnam32B1 idemp cycle
         assoc x y z = trans (cycle x y z) (comm (mop y z) x)
       in (comm, assoc)
 
+{-
 putnam62A1 : Magma a =>
              ((x, y : a) -> mop (mop x y) x = y) ->
              (x, y : a) -> mop x (mop y x) = y
@@ -66,3 +71,4 @@ putnam62A1 ident x y
     = trans
         (cong (\z => mop z (mop y x)) $ sym $ ident y x)
         (ident (mop y x) y)
+-}
