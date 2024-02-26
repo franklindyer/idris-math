@@ -16,6 +16,20 @@ isCommutative mag = (x, y : mag.set) -> mag.bop x y = mag.bop y x
 isAssociative : Magma -> Type
 isAssociative mag = (x, y, z : mag.set) -> mag.bop (mag.bop x y) z = mag.bop x (mag.bop y z)
 
+twoSidedId : (m : Magma) ->
+             (idL : hasLeftId m) -> 
+             (idR : hasRightId m) ->
+             idL.fst = idR.fst
+twoSidedId mag idL idR
+    = trans
+        (sym (idR.snd $ idL.fst))
+        (idL.snd $ idR.fst)
+
+{-
+    Down here are some exercises involving magmas that are not likely
+    to be useful elsewhere.
+-}
+
 assocFour : (m : Magma) -> 
             isAssociative m ->
             (w, x, y, z : m.set) -> 
@@ -26,16 +40,6 @@ assocFour mag assoc w x y z
         (assoc w (mag.bop x y) z)
         (cong (mag.bop w) (assoc x y z)) 
 
-twoSidedId : (m : Magma) ->
-             (idL : hasLeftId m) -> 
-             (idR : hasRightId m) ->
-             idL.fst = idR.fst
-twoSidedId mag idL idR
-    = trans
-        (sym (idR.snd $ idL.fst))
-        (idL.snd $ idR.fst)
-
--- Still buggy
 putnam32B1 : (m : Magma) ->
              ((x : m.set) -> m.bop x x = x) ->
              ((x, y, z : m.set) -> m.bop (m.bop x y) z = m.bop (m.bop y z) x) ->
@@ -63,12 +67,10 @@ putnam32B1 mag idemp cycle
         assoc x y z = trans (cycle x y z) (comm (mop y z) x)
       in (comm, assoc)
 
-{-
-putnam62A1 : Magma a =>
-             ((x, y : a) -> mop (mop x y) x = y) ->
-             (x, y : a) -> mop x (mop y x) = y
-putnam62A1 ident x y
+putnam62A1 : (m : Magma) ->
+             ((x, y : m.set) -> m.bop (m.bop x y) x = y) ->
+             (x, y : m.set) -> m.bop x (m.bop y x) = y
+putnam62A1 mag ident x y
     = trans
-        (cong (\z => mop z (mop y x)) $ sym $ ident y x)
-        (ident (mop y x) y)
--}
+        (cong (\z => mag.bop z (mag.bop y x)) $ sym $ ident y x)
+        (ident (mag.bop y x) y)
