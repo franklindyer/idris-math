@@ -1,5 +1,7 @@
 module Arithmetic
 
+import Logic
+
 -- I've marked all of the functions below as "total" because they are meant to be proofs.
 -- A non-total proof is pretty much worthless, because any type is inhabited by "undefined".
 
@@ -105,3 +107,35 @@ timesAssoc (S x) y z
     = trans
         (timesDistribR y (x * y) z)
         (cong ((y * z) +) $ timesAssoc x y z)
+
+public export
+data LeqNat : (m, n : Nat) -> Type where
+    LeqZero : (n : Nat) -> LeqNat 0 n
+    LeqShift : {m, n : Nat} -> LeqNat m n -> LeqNat (S m) (S n)
+
+total
+public export
+leqSucc : (n : Nat) -> LeqNat n (S n)
+leqSucc 0       = LeqZero 1
+leqSucc (S n)   = LeqShift (leqSucc n)
+
+total
+leqShiftL : {m, n : Nat} -> LeqNat (S m) (S n) -> LeqNat m n
+leqShiftL (LeqShift leq) = leq
+
+total
+succNotLeqZero : (n : Nat) -> LeqNat (S n) 0 -> Void
+
+total
+public export
+leqTrans : {x, y, z : Nat} -> LeqNat x y -> LeqNat y z -> LeqNat x z
+leqTrans (LeqZero y) _                      = LeqZero z
+leqTrans (LeqShift leq1) (LeqShift leq2)    = LeqShift $ leqTrans leq1 leq2
+
+total
+public export
+decLeq : (m, n : Nat) -> Dec (LeqNat m n)
+decLeq 0 n          = Yes $ LeqZero n
+decLeq (S m) 0      = No $ nope
+    where nope : LeqNat (S m) 0 -> Void
+decLeq (S m) (S n)  = caseSplit (Yes . LeqShift) (No . (. leqShiftL)) (decLeq m n) 
