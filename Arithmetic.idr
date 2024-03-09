@@ -1,32 +1,30 @@
 module Arithmetic
 
 import Logic
+import Equality
 
--- I've marked all of the functions below as "total" because they are meant to be proofs.
--- A non-total proof is pretty much worthless, because any type is inhabited by "undefined".
+predNat : Nat -> Nat
+predNat 0       = 0
+predNat (S n)   = n
 
--- Zero is an additive left-identity.
--- This is trivial because it's part of the recursive definition of (+) in Idris.
+-- -- -- -- --
+-- ADDITION --
+-- -- -- -- --
+
 total
 zeroPlusLeft : (x : Nat) -> 0 + x = x
 zeroPlusLeft x = Refl
 
--- Zero is an additive right-identity.
--- This is not so trivial, because (+) is defined by recursing on the first argument.
--- Inductively, we apply S to both sides of the equality x + 0 = x to get Sx + 0 = Sx.
--- This works because S(x+0) = Sx+0 is part of the recursive definition of (+).
 total
 zeroPlusRight : (x : Nat) -> x + 0 = x
 zeroPlusRight 0     = Refl
 zeroPlusRight (S x) = cong S (zeroPlusRight x)
 
--- Incrementing the left summand in a sum is the same as incrementing the right summand.
 total
 successorPlusShift : (x : Nat) -> (y : Nat) -> S x + y = x + S y
 successorPlusShift 0 y      = Refl
 successorPlusShift (S x) y  = cong S (successorPlusShift x y)
 
--- Addition on natural numbers is commutative.
 total
 plusComm : (x, y : Nat) -> x + y = y + x
 plusComm 0 y        = sym (zeroPlusRight y)
@@ -34,11 +32,14 @@ plusComm (S x) y    = trans
                         (cong S (plusComm x y))     -- Sx + y = S(y + x)
                         (successorPlusShift y x)    -- S(y + x) = y + Sx
 
--- Addition on natural numbers is associative.
 total
 plusAssoc : (x, y, z : Nat) -> (x + y) + z = x + (y + z)
 plusAssoc 0 y z     = Refl
 plusAssoc (S x) y z = cong S (plusAssoc x y z)
+
+-- -- -- -- -- -- --
+-- MULTIPLICATION --
+-- -- -- -- -- -- --
 
 total
 zeroTimesLeft : (x : Nat) -> 0 * x = 0
@@ -108,6 +109,30 @@ timesAssoc (S x) y z
         (timesDistribR y (x * y) z)
         (cong ((y * z) +) $ timesAssoc x y z)
 
+-- -- -- -- --
+-- EQUALITY --
+-- -- -- -- --
+
+isZero : Nat -> Type
+isZero 0        = ()
+isZero (S _)    = Void 
+
+total
+public export
+decEq : (m, n : Nat) -> Dec (m = n)
+decEq 0 0 = Yes Refl
+decEq 0 (S n) = No $ (\eq => transport isZero eq ())
+decEq (S m) 0 = No $ (\eq => transport isZero (sym eq) ())
+decEq (S m) (S n)
+    = caseSplit 
+        (\eq => Yes (cong S eq)) 
+        (\neq => No $ \eq => neq (cong predNat eq)) 
+        (decEq m n)
+
+-- -- -- -- -- -- --
+-- INEQUALITIES   --
+-- -- -- -- -- -- --
+
 public export
 data LeqNat : (m, n : Nat) -> Type where
     LeqZero : (n : Nat) -> LeqNat 0 n
@@ -124,6 +149,7 @@ leqShiftL : {m, n : Nat} -> LeqNat (S m) (S n) -> LeqNat m n
 leqShiftL (LeqShift leq) = leq
 
 total
+public export
 succNotLeqZero : (n : Nat) -> LeqNat (S n) 0 -> Void
 
 total
