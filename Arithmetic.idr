@@ -160,8 +160,27 @@ leqTrans (LeqShift leq1) (LeqShift leq2)    = LeqShift $ leqTrans leq1 leq2
 
 total
 public export
+leqAntisym : {x, y : Nat} -> LeqNat x y -> LeqNat y x -> x = y
+leqAntisym (LeqZero 0) (LeqZero 0)          = Refl
+leqAntisym (LeqShift leq1) (LeqShift leq2)  = cong S $ leqAntisym leq1 leq2
+
+total
+public export
 decLeq : (m, n : Nat) -> Dec (LeqNat m n)
 decLeq 0 n          = Yes $ LeqZero n
 decLeq (S m) 0      = No $ nope
     where nope : LeqNat (S m) 0 -> Void
 decLeq (S m) (S n)  = caseSplit (Yes . LeqShift) (No . (. leqShiftL)) (decLeq m n) 
+
+total
+public export
+eqImpliesLeq : {m, n : Nat} -> m = n -> LeqNat m n
+eqImpliesLeq {m = 0} {n = 0} Refl       = LeqZero 0
+eqImpliesLeq {m = S m} {n = S m} Refl   = LeqShift $ eqImpliesLeq Refl
+
+total
+public export
+leqImmediateSuc : {m, n : Nat} -> LeqNat m n -> (m = n -> Void) -> LeqNat (S m) n
+leqImmediateSuc (LeqZero 0) notEq       = exNihilo $ notEq Refl
+leqImmediateSuc (LeqZero (S n)) _       = LeqShift $ LeqZero n
+leqImmediateSuc (LeqShift leq) notEq    = LeqShift $ leqImmediateSuc leq (\eq => notEq $ cong S eq)
