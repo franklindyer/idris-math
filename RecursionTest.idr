@@ -1,11 +1,17 @@
+module RecursionTest
+
 import Logic
 import Arithmetic
 
+total
+public export
 div2 : Nat -> Nat
 div2 0          = 0
 div2 (S 0)      = 0
 div2 (S (S x))  = S (div2 x)
 
+total
+public export
 div2Leq : (n : Nat) -> LeqNat (div2 $ S n) n
 div2Leq 0           = LeqZero 0
 div2Leq (S 0)       = LeqShift $ LeqZero 0
@@ -47,12 +53,6 @@ log2DropDown (S m) (S n) (LeqShift leq1)
                 (caseSplitNo (decLeq (S n) (S m)) nleq)
                 (log2DropDown (S m) n leq2))
         (decLeq (S n) (S m))
-
--- We are using strong induction in the argument m to prove this claim.
--- total
--- log2Agreement : (m, n : Nat) -> LeqNat m n -> log2Careless m = log2Careful m
--- log2Agreement 0 n (LeqZero n)               = Refl
--- log2Agreement (S m) (S n) (LeqShift leq)    = ?hole2
 
 total
 log2CarefulRecurrence : (n : Nat) -> log2Careful (S n) = 1 + log2Careful (div2 $ S n)
